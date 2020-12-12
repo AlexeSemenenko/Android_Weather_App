@@ -87,84 +87,136 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void getWeather() {
+    private void changeImgVisibility () {
+        image_w.setVisibility(View.VISIBLE);
+        image_h.setVisibility(View.VISIBLE);
+        image_p.setVisibility(View.VISIBLE);
+        image_c.setVisibility(View.VISIBLE);
+    }
+
+    private void changeTextVisibility () {
+        wind1.setVisibility(View.VISIBLE);
+        humidity1.setVisibility(View.VISIBLE);
+        pressure1.setVisibility(View.VISIBLE);
+        cloudiness1.setVisibility(View.VISIBLE);
+    }
+
+    private void getCity(JSONObject jsonObject) throws JSONException {
+        String city_find = jsonObject.getString("name");
+        city.setText(city_find);
+    }
+
+    private void getCountry(JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("sys");
+
+        String country_find = jsonObject1.getString("country");
+        country.setText(country_find);
+    }
+
+    private void getTemperature (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("main");
+
+        String temperature_find = jsonObject1.getString("temp");
+        double temperature_c = Double.parseDouble(temperature_find) - 273.15;
+        temperature.setText( Math.round(temperature_c) + "°");
+    }
+
+    private void getFeelsLike (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("main");
+
+        String feelsLike_find = jsonObject1.getString("feels_like");
+        double feelsLike_c = Double.parseDouble(feelsLike_find) - 273.15;
+        feelsLike.setText("Feels like " + Math.round(feelsLike_c) + "°");
+    }
+
+    private void getPressure (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("main");
+
+        String pressure_find = jsonObject1.getString("pressure");
+        pressure.setText(pressure_find + "hPa");
+    }
+
+    private void getHumidity (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("main");
+
+        String humidity_find = jsonObject1.getString("humidity");
+        humidity.setText(humidity_find + "%");
+    }
+
+    private void changeIcon (JSONObject jsonObject) throws JSONException {
+        JSONArray jsonArray = jsonObject.getJSONArray("weather");
+
+        JSONObject jsonObject1 = jsonArray.getJSONObject(0);
+        String img = jsonObject1.getString("icon");
+        Picasso.get().load("http://openweathermap.org/img/wn/" + img + "@2x.png").into(imageView);
+    }
+
+    private void getDescription (JSONObject jsonObject) throws JSONException {
+        JSONArray jsonArray = jsonObject.getJSONArray("weather");
+
+        JSONObject jsonObject1 = jsonArray.getJSONObject(0);
+
+        String description_find = jsonObject1.getString("description");
+        description.setText(description_find);
+    }
+
+    private void getWind (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("wind");
+
+        String wind_find = jsonObject1.getString("speed");
+        wind.setText(wind_find + "m/s");
+    }
+
+    private void getClouds (JSONObject jsonObject) throws JSONException {
+        JSONObject jsonObject1 = jsonObject.getJSONObject("clouds");
+
+        String cloudiness_find = jsonObject1.getString("all");
+        cloudiness.setText(cloudiness_find + "%");
+    }
+
+    private void getDate (JSONObject jsonObject) throws JSONException {
+        String timezone_find = jsonObject.getString("timezone");
+
+        Calendar calendar = Calendar.getInstance();
+        Date date = new Date(calendar.getTimeInMillis());
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy \nHH:mm");
+        TimeZone my_time = TimeZone.getTimeZone("UTC");
+
+        my_time.setRawOffset(Integer.parseInt(timezone_find) * 1000);
+
+        simpleDateFormat.setTimeZone(my_time);
+        String formattedDate =  simpleDateFormat.format(date);
+        MainActivity.this.date.setText(formattedDate);
+    }
+
+    private void getWeather() {
         String city_entered = editText.getText().toString();
 
-            String url = "http://api.openweathermap.org/data/2.5/weather?q="+city_entered+"&appid=33fe9ce138c6c6607762c5cecd8f9eb7";
+        String url = "http://api.openweathermap.org/data/2.5/weather?q="+city_entered+"&appid=33fe9ce138c6c6607762c5cecd8f9eb7";
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new  Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
-                    wind1.setVisibility(View.VISIBLE);
-                    humidity1.setVisibility(View.VISIBLE);
-                    pressure1.setVisibility(View.VISIBLE);
-                    cloudiness1.setVisibility(View.VISIBLE);
-
-                    image_w.setVisibility(View.VISIBLE);
-                    image_h.setVisibility(View.VISIBLE);
-                    image_p.setVisibility(View.VISIBLE);
-                    image_c.setVisibility(View.VISIBLE);
-
                     JSONObject jsonObject = new JSONObject(response);
 
-                    String city_find = jsonObject.getString("name");
-                    city.setText(city_find);
+                    changeTextVisibility();
+                    changeImgVisibility();
 
+                    changeIcon(jsonObject);
 
-                    JSONObject jsonObject1 = jsonObject.getJSONObject("sys");
+                    getCity(jsonObject);
+                    getCountry(jsonObject);
+                    getTemperature(jsonObject);
+                    getFeelsLike(jsonObject);
+                    getPressure(jsonObject);
+                    getHumidity(jsonObject);
+                    getDescription(jsonObject);
+                    getWind(jsonObject);
+                    getClouds(jsonObject);
+                    getDate(jsonObject);
 
-                    String country_find = jsonObject1.getString("country");
-                    country.setText(country_find);
-
-
-                    JSONObject jsonObject2 = jsonObject.getJSONObject("main");
-
-                    String temperature_find = jsonObject2.getString("temp");
-                    double temperature_c = Double.parseDouble(temperature_find) - 273.15;
-                    temperature.setText( Math.round(temperature_c) + "°");
-
-                    String feelsLike_find = jsonObject2.getString("feels_like");
-                    double feelsLike_c = Double.parseDouble(feelsLike_find) - 273.15;
-                    feelsLike.setText("Feels like " + Math.round(feelsLike_c) + "°");
-
-                    String pressure_find = jsonObject2.getString("pressure");
-                    pressure.setText(pressure_find + "hPa");
-
-                    String humidity_find = jsonObject2.getString("humidity");
-                    humidity.setText(humidity_find + "%");
-
-
-                    JSONArray jsonArray = jsonObject.getJSONArray("weather");
-
-                    JSONObject jsonObject3 = jsonArray.getJSONObject(0);
-                    String img = jsonObject3.getString("icon");
-                    Picasso.get().load("http://openweathermap.org/img/wn/" + img + "@2x.png").into(imageView);
-
-                    String description_find = jsonObject3.getString("description");
-                    description.setText(description_find);
-
-                    String timezone_find = jsonObject.getString("timezone");
-                    Calendar calendar = Calendar.getInstance();
-                    Date date = new Date(calendar.getTimeInMillis());
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy \nHH:mm");
-                    TimeZone my_time = TimeZone.getTimeZone("UTC");
-                    my_time.setRawOffset(Integer.parseInt(timezone_find) * 1000);
-                    simpleDateFormat.setTimeZone(my_time);
-                    String formattedDate =  simpleDateFormat.format(date);
-                    MainActivity.this.date.setText(formattedDate);
-
-
-                    JSONObject jsonObject4 = jsonObject.getJSONObject("wind");
-
-                    String wind_find = jsonObject4.getString("speed");
-                    wind.setText(wind_find + "m/s");
-
-
-                    JSONObject jsonObject5 = jsonObject.getJSONObject("clouds");
-
-                    String cloudiness_find = jsonObject5.getString("all");
-                    cloudiness.setText(cloudiness_find + "%");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
