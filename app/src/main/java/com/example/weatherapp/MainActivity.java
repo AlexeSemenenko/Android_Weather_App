@@ -36,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
     final float MIN_DISTANCE = 1000;
     final int REQUEST_CODE = 101;
 
+    // 3 - render imperial, 2 - render metric, 1 - imperial, 0 - metric
+    int UNITS_STATE = 0;
+    double TEMPERATURE = 0;
+    double FEELS_LIKE = 0;
+    double WIND = 0;
+
     String locationProvider = LocationManager.GPS_PROVIDER;
 
     EditText editText;
@@ -60,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView image_p;
     ImageView image_c;
     ImageButton locationButton;
+    ImageButton unitsButton;
 
     LocationManager locationManager;
     LocationListener locationListener;
@@ -91,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         image_p = findViewById(R.id.image_p);
         image_c = findViewById(R.id.image_c);
         locationButton = findViewById(R.id.location);
+        unitsButton = findViewById(R.id.unitsButton);
 
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,6 +112,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 getWeatherByLocation();
             }
+        });
+
+        unitsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { changeUnits(); }
         });
     }
 
@@ -149,18 +162,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private  void updatedUI(WeatherData weatherData) {
+        if (UNITS_STATE == 0) {
+            UNITS_STATE = 2;
+
+            TEMPERATURE = Math.round(weatherData.getTemperature());
+            FEELS_LIKE = Math.round(weatherData.getFeelsLike());
+            WIND = Double.parseDouble(weatherData.getWind());
+        } else {
+            UNITS_STATE = 3;
+
+            TEMPERATURE = Math.round(convertCToF(weatherData.getTemperature()));
+            FEELS_LIKE = Math.round(convertCToF(weatherData.getFeelsLike()));
+            WIND = convertMsToMih(Double.parseDouble(weatherData.getWind()));
+        }
+
         changeImgVisibility();
         changeTextVisibility();
 
+        changeUnits();
+
         city.setText(weatherData.getCity());
         country.setText(weatherData.getCountry());
-        temperature.setText(Math.round(weatherData.getTemperature()) + "°");
-        feelsLike.setText("Feels like " + Math.round(weatherData.getFeelsLike()) + "°");
         pressure.setText(weatherData.getPressure() + "hPa");
         humidity.setText(weatherData.getHumidity() + "%");
         Picasso.get().load(weatherData.getImg()).into(imageView);
         description.setText(weatherData.getDescription());
-        wind.setText(weatherData.getWind() + "m/s");
         cloudiness.setText(weatherData.getClouds() + "%");
         MainActivity.this.date.setText(weatherData.getDate());
     }
@@ -193,6 +219,8 @@ public class MainActivity extends AppCompatActivity {
         requestParams.put("appid", API_KEY);
 
         getWeatherData(requestParams);
+
+        editText.setText("");
     }
 
     private void getWeatherByLocation() {
@@ -224,5 +252,68 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         locationManager.requestLocationUpdates(locationProvider, MIN_TIME, MIN_DISTANCE, locationListener);
+    }
+
+    private double convertCToF(double C) {
+        return C * 1.8 + 32;
+    }
+
+    private double convertFToC(double F) {
+        return (F - 32) / 1.8;
+    }
+
+    private double convertMsToMih(double Ms) {
+        return Ms * 2.237;
+    }
+
+    private double convertMihToMs(double Mih) {
+        return Mih * 0.447;
+    }
+
+    private void changeUnits() {
+        switch (UNITS_STATE) {
+            case 3:
+                temperature.setText(Math.round(TEMPERATURE) + "F°");
+                feelsLike.setText("Feels like " + Math.round(FEELS_LIKE) + "F°"); WIND = convertMsToMih(WIND);
+                wind.setText(Math.round(WIND) + "mi/h");
+
+                UNITS_STATE = 1;
+
+                break;
+            case 2:
+                temperature.setText(Math.round(TEMPERATURE) + "C°");
+                feelsLike.setText("Feels like " + Math.round(FEELS_LIKE) + "C°");
+                wind.setText(Math.round(WIND) + "m/s");
+
+                UNITS_STATE = 0;
+
+                break;
+            case 1:
+                TEMPERATURE = convertFToC(TEMPERATURE);
+                temperature.setText(Math.round(TEMPERATURE) + "C°");
+
+                FEELS_LIKE = convertFToC(FEELS_LIKE);
+                feelsLike.setText("Feels like " + Math.round(FEELS_LIKE) + "C°");
+
+                WIND = convertMihToMs(WIND);
+                wind.setText(Math.round(WIND) + "m/s");
+
+                UNITS_STATE = 0;
+
+                break;
+            case 0:
+                TEMPERATURE = convertCToF(TEMPERATURE);
+                temperature.setText(Math.round(TEMPERATURE) + "F°");
+
+                FEELS_LIKE = convertCToF(FEELS_LIKE);
+                feelsLike.setText("Feels like " + Math.round(FEELS_LIKE) + "F°");
+
+                WIND = convertMsToMih(WIND);
+                wind.setText(Math.round(WIND) + "mi/h");
+
+                UNITS_STATE = 1;
+
+                break;
+        }
     }
 }
